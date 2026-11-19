@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureIsCustomer;
+use App\Http\Middleware\EnsureIsStaff;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'customer' => EnsureIsCustomer::class,
+            'staff' => EnsureIsStaff::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

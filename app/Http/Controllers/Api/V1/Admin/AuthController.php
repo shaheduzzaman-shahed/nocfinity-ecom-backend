@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Admin\Auth\AdminLoginRequest;
+use App\Http\Requests\Api\V1\Admin\Auth\UpdateStaffPasswordRequest;
+use App\Http\Requests\Api\V1\Admin\Auth\UpdateStaffProfileRequest;
+use App\Http\Resources\Api\V1\UserResource;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+
+class AuthController extends Controller
+{
+    public function login(AdminLoginRequest $request): JsonResponse
+    {
+        $throttleKey = 'admin-login:'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => ["Too many login attempts. Please try again in {$seconds} seconds."],
+            ])->status(429);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            return $this->errorResponse('The provided credentials are incorrect.', 401);
+        }
+
+        if (! $user->isStaff()) {
+            RateLimiter::hit($throttleKey, 60);
+
+            return $this->errorResponse('The provided credentials are incorrect.', 401);
+        }
+
+        if (! $user->is_active) {
+            RateLimiter::hit($throttleKey, 60);
+
+            return $this->errorResponse('Your account has been deactivated.', 403);
+        }
+
+        RateLimiter::clear($throttleKey);
+
+        $user->tokens()->delete();
+        $token = $user->createToken('admin-token', ['admin'])->plainTextToken;
+
+        return $this->successResponse([
+            'user' => new UserResource($user),
+            'permissions' => $this->permissionNames($user),
+            'token' => $token,
+        ], 'Login successful.');
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return $this->successResponse(null, 'Logged out successfully.');
+    }
+
+    public function profile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return $this->successResponse([
+            'user' => new UserResource($user),
+            'permissions' => $this->permissionNames($user),
+        ], 'Profile retrieved successfully.');
+    }
+
+    public function updateProfile(UpdateStaffProfileRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $user->update($request->validated());
+
+        return $this->successResponse([
+            'user' => new UserResource($user->fresh()),
+            'permissions' => $this->permissionNames($user),
+        ], 'Profile updated successfully.');
+    }
+
+    public function updatePassword(UpdateStaffPasswordRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $user->update(['password' => $request->validated('password')]);
+
+        $currentTokenId = $user->currentAccessToken()?->getKey();
+
+        $user->tokens()
+            ->when($currentTokenId, fn ($query) => $query->whereKeyNot($currentTokenId))
+            ->delete();
+
+        return $this->successResponse(null, 'Password updated successfully.');
+    }
+
+    /**
+     * Effective permission names for the admin panel navigation.
+     *
+     * @return array<int, string>
+     */
+    private function permissionNames(User $user): array
+    {
+        return $user->getAllPermissions()
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
+    }
+}

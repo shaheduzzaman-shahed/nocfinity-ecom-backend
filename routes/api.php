@@ -7,9 +7,9 @@ Route::get('/health', function () {
 })->middleware('throttle:10,1');
 
 Route::prefix('v1')->group(function () {
-    // Admin Routes
+    // Customer & public routes
     require __DIR__.'/api/v1/auth.php';
 
-    // Learner Routes
+    // Admin routes
     require __DIR__.'/api/v1/admin/index.php';
 });
