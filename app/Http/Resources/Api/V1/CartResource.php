@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Models\AppSetting;
 use App\Models\CartItem;
+use App\Services\Settings\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -99,11 +100,7 @@ class CartResource extends JsonResource
 
         $finalTotal = max(0.00, round($subtotal - $couponDiscount + $shippingEstimate, 2));
 
-        $currency = (string) (
-            AppSetting::query()
-                ->where('setting_key', 'store_currency')
-                ->value('setting_value') ?? 'USD'
-        );
+        $currency = app(CurrencyService::class)->getStoreCurrency();
 
         return [
             'id' => $this->id,

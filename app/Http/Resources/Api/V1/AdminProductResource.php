@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\PresentsProduct;
 use App\Models\ProductVariant;
+use App\Services\Settings\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,6 +30,7 @@ class AdminProductResource extends JsonResource
                 ? (float) $this->discount_price
                 : null,
             'effective_price' => $this->effectivePrice(),
+            'currency' => app(CurrencyService::class)->getStoreCurrency(),
             'is_active' => (bool) $this->is_active,
             'sku' => $variants->first()?->sku,
             'stock' => $this->totalStock(),

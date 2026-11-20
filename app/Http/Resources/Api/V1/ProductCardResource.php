@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\PresentsProduct;
+use App\Services\Settings\CurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -31,7 +32,7 @@ class ProductCardResource extends JsonResource
             'in_stock' => $this->totalStock() > 0,
             'average_rating' => round((float) ($this->reviews_avg_rating ?? 0), 1),
             'reviews_count' => (int) ($this->reviews_count ?? 0),
-            'currency' => $this->currency ?? 'USD',
+            'currency' => app(CurrencyService::class)->getStoreCurrency(),
         ];
     }
 }

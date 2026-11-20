@@ -13,6 +13,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/v1/product.php';
     require __DIR__.'/api/v1/cart.php';
     require __DIR__.'/api/v1/coupon.php';
+    require __DIR__.'/api/v1/setting.php';
 
     // Admin routes
     require __DIR__.'/api/v1/admin/index.php';
