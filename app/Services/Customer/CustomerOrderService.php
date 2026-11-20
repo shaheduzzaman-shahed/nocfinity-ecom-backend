@@ -3,6 +3,7 @@
 namespace App\Services\Customer;
 
 use App\Enums\OrderStatus;
+use App\Events\Order\OrderCancelled;
 use App\Mail\OrderCancelledMail;
 use App\Models\Order;
 use App\Models\ProductVariant;
@@ -117,6 +118,8 @@ class CustomerOrderService
             } catch (\Throwable $e) {
                 Log::warning("Failed to send cancellation email for order {$order->order_number}: {$e->getMessage()}");
             }
+
+            OrderCancelled::dispatch($order, $reason, 'customer', $user);
 
             return $order->fresh(['items', 'coupon', 'payment', 'shippingAddress']);
         });

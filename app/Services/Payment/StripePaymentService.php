@@ -4,6 +4,7 @@ namespace App\Services\Payment;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Events\Order\OrderPaid;
 use App\Mail\OrderConfirmationMail;
 use App\Models\Cart;
 use App\Models\Coupon;
@@ -195,6 +196,8 @@ class StripePaymentService
             } catch (\Throwable $e) {
                 Log::warning("Failed to dispatch order confirmation email for {$order->order_number}: {$e->getMessage()}");
             }
+
+            OrderPaid::dispatch($order, (float) $payment->amount, $chargeId, $order->user);
 
             return $order->fresh(['items', 'payment', 'shippingAddress', 'coupon']);
         });

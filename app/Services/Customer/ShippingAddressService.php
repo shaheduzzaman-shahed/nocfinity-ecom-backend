@@ -2,6 +2,9 @@
 
 namespace App\Services\Customer;
 
+use App\Events\Customer\ShippingAddressCreated;
+use App\Events\Customer\ShippingAddressDeleted;
+use App\Events\Customer\ShippingAddressUpdated;
 use App\Models\ShippingAddress;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -47,6 +50,8 @@ class ShippingAddressService
             /** @var ShippingAddress $address */
             $address = $user->shippingAddresses()->create($data);
 
+            ShippingAddressCreated::dispatch($address, $user);
+
             return $address->fresh();
         });
     }
@@ -68,6 +73,8 @@ class ShippingAddressService
 
             $address->update($data);
 
+            ShippingAddressUpdated::dispatch($address, $user);
+
             return $address->fresh();
         });
     }
@@ -82,6 +89,8 @@ class ShippingAddressService
                     'address' => 'This shipping address cannot be deleted because it is associated with existing orders.',
                 ]);
             }
+
+            ShippingAddressDeleted::dispatch($address, $user);
 
             $wasDefault = $address->is_default;
             $address->delete();

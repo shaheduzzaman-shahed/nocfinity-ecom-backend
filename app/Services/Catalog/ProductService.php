@@ -2,6 +2,9 @@
 
 namespace App\Services\Catalog;
 
+use App\Events\Catalog\ProductCreated;
+use App\Events\Catalog\ProductDeleted;
+use App\Events\Catalog\ProductUpdated;
 use App\Models\AppSetting;
 use App\Models\Category;
 use App\Models\Product;
@@ -97,7 +100,11 @@ class ProductService
                 $this->syncVariants($product, $data['variants']);
             }
 
-            return $this->find($product);
+            $savedProduct = $this->find($product);
+
+            ProductCreated::dispatch($savedProduct);
+
+            return $savedProduct;
         });
     }
 
@@ -134,13 +141,19 @@ class ProductService
                 $this->syncVariants($product, $data['variants']);
             }
 
-            return $this->find($product->fresh());
+            $updatedProduct = $this->find($product->fresh());
+
+            ProductUpdated::dispatch($updatedProduct);
+
+            return $updatedProduct;
         });
     }
 
     public function delete(Product $product): void
     {
         $imagePaths = $product->images()->pluck('image_url')->all();
+
+        ProductDeleted::dispatch($product);
 
         DB::transaction(fn () => $product->delete());
 

@@ -3,6 +3,10 @@
 namespace App\Services\Admin;
 
 use App\Enums\AccountType;
+use App\Events\Admin\StaffCreated;
+use App\Events\Admin\StaffDeleted;
+use App\Events\Admin\StaffStatusToggled;
+use App\Events\Admin\StaffUpdated;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -48,7 +52,7 @@ class StaffManagementService
             );
         }
 
-        return DB::transaction(function () use ($data, $roleNames): User {
+        return DB::transaction(function () use ($data, $roleNames, $actor): User {
             $staff = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -61,6 +65,8 @@ class StaffManagementService
             if (! empty($roleNames)) {
                 $staff->syncRoles($roleNames);
             }
+
+            StaffCreated::dispatch($staff, $roleNames, $actor);
 
             return $staff->fresh(['roles']);
         });
@@ -105,7 +111,7 @@ class StaffManagementService
             }
         }
 
-        return DB::transaction(function () use ($staff, $data): User {
+        return DB::transaction(function () use ($staff, $data, $actor): User {
             $fillableData = Arr::only($data, ['name', 'email', 'phone', 'is_active']);
 
             if (! empty($data['password'])) {
@@ -117,6 +123,8 @@ class StaffManagementService
             if (array_key_exists('roles', $data)) {
                 $staff->syncRoles($data['roles']);
             }
+
+            StaffUpdated::dispatch($staff, $data['roles'] ?? null, $actor);
 
             return $staff->fresh(['roles']);
         });
@@ -136,6 +144,8 @@ class StaffManagementService
 
         $staff->update(['is_active' => $isActive]);
 
+        StaffStatusToggled::dispatch($staff, $isActive, $actor);
+
         return $staff->fresh(['roles']);
     }
 
@@ -150,6 +160,8 @@ class StaffManagementService
         if ($actor->is($staff)) {
             throw new AccessDeniedHttpException('You cannot delete your own account.');
         }
+
+        StaffDeleted::dispatch($staff, $actor);
 
         $staff->delete();
     }

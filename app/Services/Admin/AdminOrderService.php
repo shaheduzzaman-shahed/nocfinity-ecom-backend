@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Enums\OrderStatus;
+use App\Events\Order\OrderStatusUpdated;
 use App\Mail\OrderCancelledMail;
 use App\Mail\OrderStatusUpdatedMail;
 use App\Models\Order;
@@ -205,6 +206,8 @@ class AdminOrderService
                     Log::warning("Failed to send status update email for order {$order->order_number}: {$e->getMessage()}");
                 }
             }
+
+            OrderStatusUpdated::dispatch($order, $currentStatus, $targetStatus, $reason, $note);
 
             return $order->fresh(['user', 'items', 'coupon', 'payment', 'shippingAddress']);
         });

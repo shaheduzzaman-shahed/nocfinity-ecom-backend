@@ -4,6 +4,7 @@ namespace App\Services\Customer;
 
 use App\Enums\OrderStatus;
 use App\Enums\ReviewStatus;
+use App\Events\Review\ReviewSubmitted;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductReview;
@@ -147,7 +148,7 @@ class CustomerReviewService
         $title = $this->sanitizeText($data['title'] ?? null);
         $comment = (string) $this->sanitizeText($data['comment'] ?? '');
 
-        return ProductReview::create([
+        $review = ProductReview::create([
             'product_id' => $product->id,
             'user_id' => $user->id,
             'order_id' => $orderId,
@@ -157,6 +158,10 @@ class CustomerReviewService
             'status' => ReviewStatus::Pending,
             'is_verified_purchase' => $isVerifiedPurchase,
         ]);
+
+        ReviewSubmitted::dispatch($review, $user);
+
+        return $review;
     }
 
     /**

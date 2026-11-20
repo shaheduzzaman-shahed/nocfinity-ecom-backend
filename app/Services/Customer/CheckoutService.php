@@ -4,6 +4,7 @@ namespace App\Services\Customer;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Events\Order\OrderPlaced;
 use App\Models\AppSetting;
 use App\Models\Cart;
 use App\Models\Coupon;
@@ -184,6 +185,8 @@ class CheckoutService
             ]);
 
             $order->client_secret = $paymentIntent['client_secret'];
+
+            OrderPlaced::dispatch($order, $user);
 
             return $order->load(['items', 'shippingAddress', 'coupon', 'payment']);
         });
