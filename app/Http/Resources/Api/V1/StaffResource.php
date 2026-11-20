@@ -16,7 +16,8 @@ class StaffResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'is_active' => $this->is_active,
+            'phone' => $this->phone,
+            'is_active' => (bool) $this->is_active,
             'roles' => $this->getRoleNames()->sort()->values()->all(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

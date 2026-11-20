@@ -21,6 +21,11 @@ Route::group(['middleware' => ['auth:sanctum', 'staff']], function () {
 
     Route::group(['middleware' => 'permission:staff.manage'], function () {
         Route::get('/staff', [StaffRoleController::class, 'index']);
+        Route::post('/staff', [StaffRoleController::class, 'store']);
+        Route::get('/staff/{staff}', [StaffRoleController::class, 'show']);
+        Route::put('/staff/{staff}', [StaffRoleController::class, 'update']);
+        Route::patch('/staff/{staff}/status', [StaffRoleController::class, 'toggleStatus']);
+        Route::delete('/staff/{staff}', [StaffRoleController::class, 'destroy']);
         Route::put('/staff/{staff}/roles', [StaffRoleController::class, 'updateRoles']);
     });
 });
