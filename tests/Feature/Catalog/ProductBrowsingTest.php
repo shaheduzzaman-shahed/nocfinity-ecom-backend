@@ -325,3 +325,122 @@ test('product cards expose pricing, stock, image and review data', function () {
     expect($response->json('data.0.primary_image'))
         ->toContain('/storage/products/card.jpg');
 });
+
+test('public product listing filters by color', function () {
+    $red = Color::factory()->create(['name' => 'Ruby Red']);
+    $blue = Color::factory()->create(['name' => 'Navy Blue']);
+
+    $redProduct = Product::factory()->create(['name' => 'Red Hoodie']);
+    ProductVariant::factory()->for($redProduct)->create(['color_id' => $red->id, 'is_active' => true]);
+
+    $blueProduct = Product::factory()->create(['name' => 'Blue Hoodie']);
+    ProductVariant::factory()->for($blueProduct)->create(['color_id' => $blue->id, 'is_active' => true]);
+
+    $response = $this->getJson('/api/v1/products?color_id='.$red->id);
+    $response->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $redProduct->id);
+
+    $responseBoth = $this->getJson('/api/v1/products?color_id='.$red->id.','.$blue->id);
+    $responseBoth->assertOk()
+        ->assertJsonPath('meta.total', 2);
+});
+
+test('public product listing filters by size', function () {
+    $small = Size::factory()->create(['name' => 'S']);
+    $large = Size::factory()->create(['name' => 'L']);
+
+    $smallProduct = Product::factory()->create(['name' => 'Small Tee']);
+    ProductVariant::factory()->for($smallProduct)->create(['size_id' => $small->id, 'is_active' => true]);
+
+    $largeProduct = Product::factory()->create(['name' => 'Large Tee']);
+    ProductVariant::factory()->for($largeProduct)->create(['size_id' => $large->id, 'is_active' => true]);
+
+    $response = $this->getJson('/api/v1/products?size_id='.$small->id);
+    $response->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $smallProduct->id);
+});
+
+test('public product listing supports combined filters together', function () {
+    $catA = Category::factory()->create(['is_active' => true]);
+    $catB = Category::factory()->create(['is_active' => true]);
+    $red = Color::factory()->create(['name' => 'Crimson']);
+    $blue = Color::factory()->create(['name' => 'Azure']);
+    $medium = Size::factory()->create(['name' => 'M']);
+
+    // Matching product
+    $match = Product::factory()->for($catA)->create([
+        'name' => 'Target Match Oxford Shirt',
+        'regular_price' => 120,
+        'discount_price' => 85,
+        'is_active' => true,
+    ]);
+    ProductVariant::factory()->for($match)->create([
+        'color_id' => $red->id,
+        'size_id' => $medium->id,
+        'stock' => 10,
+        'is_active' => true,
+    ]);
+
+    // Wrong category
+    $otherCat = Product::factory()->for($catB)->create([
+        'name' => 'Target Match Other Cat',
+        'regular_price' => 85,
+    ]);
+    ProductVariant::factory()->for($otherCat)->create([
+        'color_id' => $red->id,
+        'size_id' => $medium->id,
+        'stock' => 10,
+    ]);
+
+    // Wrong color
+    $wrongColor = Product::factory()->for($catA)->create([
+        'name' => 'Target Match Wrong Color',
+        'regular_price' => 85,
+    ]);
+    ProductVariant::factory()->for($wrongColor)->create([
+        'color_id' => $blue->id,
+        'size_id' => $medium->id,
+        'stock' => 10,
+    ]);
+
+    // Out of stock
+    $outOfStock = Product::factory()->for($catA)->create([
+        'name' => 'Target Match OOS',
+        'regular_price' => 85,
+    ]);
+    ProductVariant::factory()->for($outOfStock)->create([
+        'color_id' => $red->id,
+        'size_id' => $medium->id,
+        'stock' => 0,
+    ]);
+
+    $response = $this->getJson('/api/v1/products?'.http_build_query([
+        'search' => 'Oxford',
+        'category_id' => $catA->id,
+        'color_id' => $red->id,
+        'size_id' => $medium->id,
+        'min_price' => 50,
+        'max_price' => 100,
+        'availability' => 'in_stock',
+        'sort' => 'price_asc',
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $match->id);
+});
+
+test('public catalog exposes colors and sizes', function () {
+    Color::factory()->create(['name' => 'Emerald']);
+    Size::factory()->create(['name' => 'XL', 'sort_order' => 5]);
+
+    $this->getJson('/api/v1/colors')
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    $this->getJson('/api/v1/sizes')
+        ->assertOk()
+        ->assertJsonPath('success', true);
+});

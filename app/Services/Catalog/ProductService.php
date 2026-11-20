@@ -428,6 +428,28 @@ class ProductService
                     ->where('stock', '>', 0),
             );
         }
+
+        $colorIds = $this->parseIdList($filters['color_id'] ?? $filters['color_ids'] ?? null);
+
+        if ($colorIds !== []) {
+            $query->whereHas(
+                'variants',
+                fn ($variant) => $variant
+                    ->where('is_active', true)
+                    ->whereIn('color_id', $colorIds),
+            );
+        }
+
+        $sizeIds = $this->parseIdList($filters['size_id'] ?? $filters['size_ids'] ?? null);
+
+        if ($sizeIds !== []) {
+            $query->whereHas(
+                'variants',
+                fn ($variant) => $variant
+                    ->where('is_active', true)
+                    ->whereIn('size_id', $sizeIds),
+            );
+        }
     }
 
     private function applyPublicSort(Builder $query, ?string $sort): void
@@ -526,5 +548,35 @@ class ProductService
         foreach ($products as $product) {
             $product->setAttribute('currency', $currency);
         }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function parseIdList(mixed $value): array
+    {
+        if (is_numeric($value)) {
+            $id = (int) $value;
+
+            return $id > 0 ? [$id] : [];
+        }
+
+        if (is_string($value) && trim($value) !== '') {
+            $parts = explode(',', $value);
+
+            return array_values(array_filter(
+                array_map(fn ($p) => is_numeric(trim($p)) ? (int) trim($p) : null, $parts),
+                fn ($id) => $id !== null && $id > 0,
+            ));
+        }
+
+        if (is_array($value)) {
+            return array_values(array_filter(
+                array_map(fn ($item) => is_numeric($item) ? (int) $item : null, $value),
+                fn ($id) => $id !== null && $id > 0,
+            ));
+        }
+
+        return [];
     }
 }

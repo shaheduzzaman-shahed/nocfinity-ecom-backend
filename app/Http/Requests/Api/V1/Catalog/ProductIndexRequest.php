@@ -19,6 +19,10 @@ class ProductIndexRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:255'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'color_id' => ['nullable'],
+            'color_ids' => ['nullable'],
+            'size_id' => ['nullable'],
+            'size_ids' => ['nullable'],
             'min_price' => ['nullable', 'numeric', 'min:0'],
             'max_price' => ['nullable', 'numeric', 'min:0', 'gte:min_price'],
             'sort' => ['nullable', 'in:newest,price_asc,price_desc'],
