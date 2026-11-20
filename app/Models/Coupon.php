@@ -46,4 +46,13 @@ class Coupon extends Model
     {
         return $this->hasMany(CouponUser::class);
     }
+
+    public function calculateDiscount(float $subtotal): float
+    {
+        if ($this->type === 'percentage') {
+            return round($subtotal * ((float) $this->value / 100), 2);
+        }
+
+        return round(min((float) $this->value, $subtotal), 2);
+    }
 }

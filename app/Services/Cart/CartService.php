@@ -20,6 +20,7 @@ class CartService
     public function loadCartWithRelations(Cart $cart): Cart
     {
         return $cart->load([
+            'coupon',
             'items' => fn ($q) => $q->orderBy('created_at', 'desc')->orderBy('id', 'desc'),
             'items.productVariant.product.images' => fn ($q) => $q->orderByDesc('is_primary')->orderBy('sort_order'),
             'items.productVariant.color',

@@ -73,7 +73,30 @@ class CartResource extends JsonResource
         );
 
         $shippingEstimate = $shippingEnabled && $items->isNotEmpty() ? $shippingFee : 0.00;
+
+        $coupon = $this->relationLoaded('coupon') ? $this->coupon : ($this->coupon_id ? $this->coupon : null);
         $couponDiscount = 0.00;
+        $couponData = null;
+
+        if ($coupon) {
+            $isValid = $coupon->is_active
+                && ($coupon->valid_from === null || now()->gte($coupon->valid_from))
+                && ($coupon->valid_until === null || now()->lte($coupon->valid_until))
+                && ($coupon->usage_limit === null || $coupon->usage_count < $coupon->usage_limit)
+                && ($subtotal >= (float) $coupon->min_order_amount);
+
+            if ($isValid) {
+                $couponDiscount = $coupon->calculateDiscount($subtotal);
+                $couponData = [
+                    'id' => $coupon->id,
+                    'code' => $coupon->code,
+                    'type' => $coupon->type,
+                    'value' => (float) $coupon->value,
+                    'discount_amount' => round($couponDiscount, 2),
+                ];
+            }
+        }
+
         $finalTotal = max(0.00, round($subtotal - $couponDiscount + $shippingEstimate, 2));
 
         $currency = (string) (
@@ -87,6 +110,7 @@ class CartResource extends JsonResource
             'items' => CartItemResource::collection($items),
             'items_count' => $items->count(),
             'total_quantity' => $totalQuantity,
+            'coupon' => $couponData,
             'summary' => [
                 'subtotal' => round($subtotal, 2),
                 'product_discount' => round($productDiscount, 2),
