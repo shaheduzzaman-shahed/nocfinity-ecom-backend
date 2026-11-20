@@ -3,6 +3,9 @@
 namespace App\Services\Admin;
 
 use App\Enums\AccountType;
+use App\Events\Admin\RoleCreated;
+use App\Events\Admin\RoleDeleted;
+use App\Events\Admin\RoleUpdated;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -48,6 +51,8 @@ class RoleService
 
             $role->syncPermissions($data['permissions'] ?? []);
 
+            RoleCreated::dispatch($role, $data['permissions'] ?? []);
+
             return $role;
         });
 
@@ -64,9 +69,13 @@ class RoleService
         DB::transaction(function () use ($role, $data): void {
             $role->fill(Arr::only($data, ['name', 'display_name', 'description']))->save();
 
+            $permissionsChanged = false;
             if (array_key_exists('permissions', $data)) {
                 $role->syncPermissions($data['permissions']);
+                $permissionsChanged = true;
             }
+
+            RoleUpdated::dispatch($role, $data['permissions'] ?? null, $permissionsChanged);
         });
 
         return $role->fresh()->load('permissions')->loadCount('users');
@@ -83,6 +92,8 @@ class RoleService
                 'This role is assigned to staff members and cannot be deleted.',
             );
         }
+
+        RoleDeleted::dispatch($role);
 
         $role->delete();
     }

@@ -2,6 +2,9 @@
 
 namespace App\Services\Promotions;
 
+use App\Events\Promotions\CouponCreated;
+use App\Events\Promotions\CouponDeleted;
+use App\Events\Promotions\CouponUpdated;
 use App\Models\Cart;
 use App\Models\Coupon;
 use App\Models\CouponUser;
@@ -65,7 +68,11 @@ class CouponService
             $data['code'] = strtoupper(trim((string) $data['code']));
         }
 
-        return Coupon::create($data);
+        $coupon = Coupon::create($data);
+
+        CouponCreated::dispatch($coupon);
+
+        return $coupon;
     }
 
     /**
@@ -79,11 +86,15 @@ class CouponService
 
         $coupon->update($data);
 
+        CouponUpdated::dispatch($coupon);
+
         return $coupon->fresh();
     }
 
     public function delete(Coupon $coupon): void
     {
+        CouponDeleted::dispatch($coupon);
+
         $coupon->delete();
     }
 

@@ -4,6 +4,11 @@ namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Actions\Auth\RegisterCustomerAction;
 use App\Enums\AccountType;
+use App\Events\Auth\UserLoggedIn;
+use App\Events\Auth\UserLoggedOut;
+use App\Events\Auth\UserPasswordReset;
+use App\Events\Auth\UserProfileUpdated;
+use App\Events\Auth\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
@@ -11,6 +16,7 @@ use App\Http\Requests\Api\V1\Auth\RegisterRequest;
 use App\Http\Requests\Api\V1\Auth\ResetPasswordRequest;
 use App\Http\Requests\Api\V1\Auth\UpdateProfileRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -27,6 +33,8 @@ class AuthController extends Controller
         $user = $action->execute($request->validated());
 
         $token = $user->createToken('auth-token')->plainTextToken;
+
+        UserRegistered::dispatch($user);
 
         return $this->successResponse([
             'user' => new UserResource($user),
@@ -71,6 +79,8 @@ class AuthController extends Controller
         $user->tokens()->delete();
         $token = $user->createToken('auth-token')->plainTextToken;
 
+        UserLoggedIn::dispatch($user, false, $request->ip());
+
         return $this->successResponse([
             'user' => new UserResource($user),
             'token' => $token,
@@ -79,7 +89,10 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+
+        UserLoggedOut::dispatch($user, false, $request->ip());
 
         return $this->successResponse(null, 'Logged out successfully.');
     }
@@ -101,10 +114,34 @@ class AuthController extends Controller
 
         $user->update($data);
 
+        UserProfileUpdated::dispatch($user, array_keys($data), false);
+
         return $this->successResponse(
             new UserResource($user->fresh()),
             'Profile updated successfully.',
         );
+    }
+
+    public function activityLogs(Request $request)
+    {
+        $user = $request->user();
+        $perPage = min(max((int) $request->input('per_page', 15), 1), 50);
+
+        $logs = $user->activityLogs()
+            ->latest('created_at')
+            ->latest('id')
+            ->paginate($perPage)
+            ->through(fn (ActivityLog $log) => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'entity_type' => $log->entity_type,
+                'entity_id' => $log->entity_id,
+                'payload' => $log->payload,
+                'ip_address' => $log->ip_address,
+                'created_at' => $log->created_at?->toISOString(),
+            ]);
+
+        return $this->paginatedResponse($logs, 'Activity logs retrieved successfully.');
     }
 
     public function forgotPassword(ForgotPasswordRequest $request)
@@ -128,6 +165,8 @@ class AuthController extends Controller
                 ])->save();
 
                 $user->tokens()->delete();
+
+                UserPasswordReset::dispatch($user);
 
                 event(new PasswordReset($user));
             },

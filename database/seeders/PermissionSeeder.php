@@ -56,6 +56,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'reviews.view', 'module' => 'reviews', 'description' => 'View product reviews'],
             ['name' => 'reviews.manage', 'module' => 'reviews', 'description' => 'Approve or reject reviews'],
             ['name' => 'reviews.delete', 'module' => 'reviews', 'description' => 'Delete reviews'],
+
+            // Activity Logs / Audit
+            ['name' => 'activity_logs.view', 'module' => 'system', 'description' => 'View activity and audit logs'],
         ];
 
         foreach ($permissions as $permission) {

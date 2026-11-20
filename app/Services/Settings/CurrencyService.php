@@ -2,6 +2,7 @@
 
 namespace App\Services\Settings;
 
+use App\Events\Settings\CurrencySettingUpdated;
 use App\Models\AppSetting;
 use App\Support\StripeCurrencies;
 use Illuminate\Validation\ValidationException;
@@ -36,6 +37,8 @@ class CurrencyService
                 'group_name' => 'currency',
             ],
         );
+
+        CurrencySettingUpdated::dispatch($normalized);
 
         return $normalized;
     }

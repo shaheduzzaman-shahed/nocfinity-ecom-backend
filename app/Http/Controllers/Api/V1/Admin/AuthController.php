@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Events\Auth\UserLoggedIn;
+use App\Events\Auth\UserLoggedOut;
+use App\Events\Auth\UserPasswordUpdated;
+use App\Events\Auth\UserProfileUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\Auth\AdminLoginRequest;
 use App\Http\Requests\Api\V1\Admin\Auth\UpdateStaffPasswordRequest;
@@ -53,6 +57,8 @@ class AuthController extends Controller
         $user->tokens()->delete();
         $token = $user->createToken('admin-token', ['admin'])->plainTextToken;
 
+        UserLoggedIn::dispatch($user, true, $request->ip());
+
         return $this->successResponse([
             'user' => new UserResource($user),
             'roles' => $user->getRoleNames()->values(),
@@ -63,7 +69,10 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+
+        UserLoggedOut::dispatch($user, true, $request->ip());
 
         return $this->successResponse(null, 'Logged out successfully.');
     }
@@ -85,6 +94,8 @@ class AuthController extends Controller
 
         $user->update($request->validated());
 
+        UserProfileUpdated::dispatch($user, array_keys($request->validated()), true);
+
         return $this->successResponse([
             'user' => new UserResource($user->fresh()),
             'roles' => $user->getRoleNames()->values(),
@@ -103,6 +114,8 @@ class AuthController extends Controller
         $user->tokens()
             ->when($currentTokenId, fn ($query) => $query->whereKeyNot($currentTokenId))
             ->delete();
+
+        UserPasswordUpdated::dispatch($user, true);
 
         return $this->successResponse(null, 'Password updated successfully.');
     }

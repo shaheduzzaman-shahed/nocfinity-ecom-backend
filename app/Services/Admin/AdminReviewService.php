@@ -3,6 +3,8 @@
 namespace App\Services\Admin;
 
 use App\Enums\ReviewStatus;
+use App\Events\Review\ReviewDeleted;
+use App\Events\Review\ReviewModerated;
 use App\Models\ProductReview;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -64,13 +66,18 @@ class AdminReviewService
 
     public function updateStatus(ProductReview $review, ReviewStatus $status): ProductReview
     {
+        $oldStatus = is_object($review->status) ? $review->status->value : $review->status;
         $review->update(['status' => $status]);
+
+        ReviewModerated::dispatch($review, $oldStatus, $status->value);
 
         return $review->fresh(['product.primaryImage', 'user', 'order']);
     }
 
     public function deleteReview(ProductReview $review): void
     {
+        ReviewDeleted::dispatch($review);
+
         $review->delete();
     }
 }

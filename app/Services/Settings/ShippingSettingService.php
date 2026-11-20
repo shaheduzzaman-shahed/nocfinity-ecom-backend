@@ -2,6 +2,7 @@
 
 namespace App\Services\Settings;
 
+use App\Events\Settings\ShippingSettingUpdated;
 use App\Models\AppSetting;
 use Illuminate\Support\Facades\DB;
 
@@ -58,7 +59,11 @@ class ShippingSettingService
                 );
             }
 
-            return $this->getShippingSettings();
+            $settings = $this->getShippingSettings();
+
+            ShippingSettingUpdated::dispatch($settings);
+
+            return $settings;
         });
     }
 }

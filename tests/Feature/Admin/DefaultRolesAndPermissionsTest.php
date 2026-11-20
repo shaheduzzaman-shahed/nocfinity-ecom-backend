@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 test('all documented permissions are seeded', function () {
-    expect(Permission::count())->toBe(23)
+    expect(Permission::count())->toBe(24)
         ->and(Permission::pluck('name')->all())
         ->toContain(
             'dashboard.view',
@@ -30,6 +30,7 @@ test('all documented permissions are seeded', function () {
             'shipping.view', 'shipping.manage',
             'currency.view', 'currency.manage',
             'reviews.view', 'reviews.manage', 'reviews.delete',
+            'activity_logs.view',
         );
 });
 

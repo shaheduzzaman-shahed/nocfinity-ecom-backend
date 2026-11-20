@@ -15,4 +15,5 @@ Route::prefix('admin')->group(function () {
     include __DIR__.'/review.php';
     include __DIR__.'/customer.php';
     include __DIR__.'/dashboard.php';
+    include __DIR__.'/activity_log.php';
 });
