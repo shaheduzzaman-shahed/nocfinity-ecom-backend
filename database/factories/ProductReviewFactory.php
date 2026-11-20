@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ProductReviewFactory extends Factory
 {
+    protected $model = ProductReview::class;
+
     /**
      * @return array<string, mixed>
      */
@@ -20,8 +22,9 @@ class ProductReviewFactory extends Factory
         return [
             'product_id' => Product::factory(),
             'user_id' => User::factory(),
+            'order_id' => null,
             'rating' => fake()->numberBetween(1, 5),
-            'title' => fake()->optional(0.7)->sentence(4),
+            'title' => fake()->sentence(4),
             'comment' => fake()->paragraph(),
             'status' => 'pending',
             'is_verified_purchase' => false,
@@ -30,22 +33,11 @@ class ProductReviewFactory extends Factory
 
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'status' => 'approved',
-        ]);
+        return $this->state(fn () => ['status' => 'approved']);
     }
 
-    public function rejected(): static
+    public function rating(int $rating): static
     {
-        return $this->state(fn (array $attributes) => [
-            'status' => 'rejected',
-        ]);
-    }
-
-    public function verified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'is_verified_purchase' => true,
-        ]);
+        return $this->state(fn () => ['rating' => $rating]);
     }
 }

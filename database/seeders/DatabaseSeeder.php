@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ColorSizeSeeder::class,
             ProductSeeder::class,
+            ProductImagePlaceholderSeeder::class,
             CouponSeeder::class,
             AppSettingSeeder::class,
         ]);

@@ -10,6 +10,14 @@ Route::prefix('v1')->group(function () {
     // Customer & public routes
     require __DIR__.'/api/v1/auth.php';
     require __DIR__.'/api/v1/category.php';
+    require __DIR__.'/api/v1/product.php';
+    require __DIR__.'/api/v1/cart.php';
+    require __DIR__.'/api/v1/coupon.php';
+    require __DIR__.'/api/v1/address.php';
+    require __DIR__.'/api/v1/checkout.php';
+    require __DIR__.'/api/v1/order.php';
+    require __DIR__.'/api/v1/payment.php';
+    require __DIR__.'/api/v1/setting.php';
 
     // Admin routes
     require __DIR__.'/api/v1/admin/index.php';
