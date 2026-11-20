@@ -1,0 +1,26 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Models\Color;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
+
+/**
+ * @extends Factory<Color>
+ */
+class ColorFactory extends Factory
+{
+    protected $model = Color::class;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'name' => Str::title(fake()->unique()->colorName()),
+            'hex_code' => Str::upper(fake()->hexColor()),
+        ];
+    }
+}
