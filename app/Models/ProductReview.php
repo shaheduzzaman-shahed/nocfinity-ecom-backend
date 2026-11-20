@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReviewStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,7 @@ class ProductReview extends Model
     protected function casts(): array
     {
         return [
+            'status' => ReviewStatus::class,
             'rating' => 'integer',
             'is_verified_purchase' => 'boolean',
         ];

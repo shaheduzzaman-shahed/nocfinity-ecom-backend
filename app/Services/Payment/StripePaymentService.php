@@ -41,7 +41,6 @@ class StripePaymentService
                     'order_number' => $order->order_number,
                     'user_id' => (string) $order->user_id,
                 ],
-                'payment_method_types' => ['card'],
             ]);
 
             return [

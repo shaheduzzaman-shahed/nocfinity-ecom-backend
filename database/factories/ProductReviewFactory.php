@@ -36,6 +36,16 @@ class ProductReviewFactory extends Factory
         return $this->state(fn () => ['status' => 'approved']);
     }
 
+    public function rejected(): static
+    {
+        return $this->state(fn () => ['status' => 'rejected']);
+    }
+
+    public function verified(): static
+    {
+        return $this->state(fn () => ['is_verified_purchase' => true]);
+    }
+
     public function rating(int $rating): static
     {
         return $this->state(fn () => ['rating' => $rating]);
