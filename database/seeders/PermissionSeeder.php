@@ -10,6 +10,9 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            // Dashboard
+            ['name' => 'dashboard.view', 'module' => 'dashboard', 'description' => 'View the admin dashboard'],
+
             // Products
             ['name' => 'products.view', 'module' => 'products', 'description' => 'View products'],
             ['name' => 'products.create', 'module' => 'products', 'description' => 'Create products'],

@@ -186,7 +186,7 @@ Do not create unnecessary abstractions for simple CRUD operations.
 
 ### **A. Controllers**
 
-Controllers should coordinate requests, not contain the entire business process.
+Controllers should coordinate requests, not contain the entire business process. Do not write business logics in controller. Use service or action class.
 
 Good:
 

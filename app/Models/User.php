@@ -21,6 +21,13 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
+    /**
+     * Resolve roles and permissions against the "web" guard so Sanctum token
+     * authentication cannot redirect RBAC lookups to the provider-less
+     * "sanctum" guard.
+     */
+    protected $guard_name = 'web';
+
     protected function casts(): array
     {
         return [
@@ -39,6 +46,33 @@ class User extends Authenticatable
     public function isStaff(): bool
     {
         return $this->account_type === AccountType::Staff;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->isStaff() && $this->hasRole('super-admin');
+    }
+
+    /**
+     * Effective permission names used by the admin panel navigation and
+     * permission matrix. The Super Admin role resolves to every permission.
+     *
+     * @return array<int, string>
+     */
+    public function effectivePermissionNames(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return Permission::query()
+                ->orderBy('name')
+                ->pluck('name')
+                ->all();
+        }
+
+        return $this->getAllPermissions()
+            ->pluck('name')
+            ->sort()
+            ->values()
+            ->all();
     }
 
     public function cart(): HasOne

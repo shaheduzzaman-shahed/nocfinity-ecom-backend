@@ -55,7 +55,8 @@ class AuthController extends Controller
 
         return $this->successResponse([
             'user' => new UserResource($user),
-            'permissions' => $this->permissionNames($user),
+            'roles' => $user->getRoleNames()->values(),
+            'permissions' => $user->effectivePermissionNames(),
             'token' => $token,
         ], 'Login successful.');
     }
@@ -73,7 +74,8 @@ class AuthController extends Controller
 
         return $this->successResponse([
             'user' => new UserResource($user),
-            'permissions' => $this->permissionNames($user),
+            'roles' => $user->getRoleNames()->values(),
+            'permissions' => $user->effectivePermissionNames(),
         ], 'Profile retrieved successfully.');
     }
 
@@ -85,7 +87,8 @@ class AuthController extends Controller
 
         return $this->successResponse([
             'user' => new UserResource($user->fresh()),
-            'permissions' => $this->permissionNames($user),
+            'roles' => $user->getRoleNames()->values(),
+            'permissions' => $user->effectivePermissionNames(),
         ], 'Profile updated successfully.');
     }
 
@@ -102,19 +105,5 @@ class AuthController extends Controller
             ->delete();
 
         return $this->successResponse(null, 'Password updated successfully.');
-    }
-
-    /**
-     * Effective permission names for the admin panel navigation.
-     *
-     * @return array<int, string>
-     */
-    private function permissionNames(User $user): array
-    {
-        return $user->getAllPermissions()
-            ->pluck('name')
-            ->sort()
-            ->values()
-            ->all();
     }
 }

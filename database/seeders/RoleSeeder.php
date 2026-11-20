@@ -16,12 +16,12 @@ class RoleSeeder extends Seeder
                 'display_name' => 'Super Admin',
                 'description' => 'Full administrative access with all permissions.',
                 'is_system' => true,
-                'permissions' => [], // Gets all permissions via gate
+                'permissions' => [], // Gets all permissions via the gate
             ],
             [
                 'name' => 'admin',
                 'display_name' => 'Admin',
-                'description' => 'Administrative access according to assigned permissions.',
+                'description' => 'Broad operational access including staff and role management.',
                 'is_system' => false,
                 'permissions' => Permission::pluck('name')->toArray(),
             ],
@@ -33,31 +33,26 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     'products.view', 'products.create', 'products.edit', 'products.delete',
                     'categories.view', 'categories.manage',
-                    'reviews.view', 'reviews.manage', 'reviews.delete',
                 ],
             ],
             [
                 'name' => 'order-manager',
                 'display_name' => 'Order Manager',
-                'description' => 'Order management and fulfillment.',
+                'description' => 'Order management, fulfillment, and shipping configuration.',
                 'is_system' => false,
                 'permissions' => [
                     'orders.view', 'orders.update_status',
-                    'customers.view',
-                    'coupons.view',
-                    'shipping.view',
+                    'shipping.view', 'shipping.manage',
                 ],
             ],
             [
                 'name' => 'support',
                 'display_name' => 'Support',
-                'description' => 'Customer and order-support operations.',
+                'description' => 'Read-only customer and order support access.',
                 'is_system' => false,
                 'permissions' => [
                     'orders.view',
                     'customers.view',
-                    'products.view',
-                    'reviews.view',
                 ],
             ],
         ];
@@ -66,14 +61,13 @@ class RoleSeeder extends Seeder
             $permissions = $roleData['permissions'];
             unset($roleData['permissions']);
 
-            $role = Role::firstOrCreate(
+            $role = Role::updateOrCreate(
                 ['name' => $roleData['name']],
                 $roleData,
             );
 
-            if (! empty($permissions)) {
-                $role->syncPermissions($permissions);
-            }
+            // Always sync so re-seeding removes permissions that are no longer granted.
+            $role->syncPermissions($permissions);
         }
     }
 }
