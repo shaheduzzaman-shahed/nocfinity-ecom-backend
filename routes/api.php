@@ -15,6 +15,8 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/v1/coupon.php';
     require __DIR__.'/api/v1/address.php';
     require __DIR__.'/api/v1/checkout.php';
+    require __DIR__.'/api/v1/order.php';
+    require __DIR__.'/api/v1/payment.php';
     require __DIR__.'/api/v1/setting.php';
 
     // Admin routes

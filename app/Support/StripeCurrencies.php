@@ -79,6 +79,25 @@ class StripeCurrencies
         return array_key_exists(strtoupper(trim($code)), static::$currencies);
     }
 
+    public static function isZeroDecimal(string $currency): bool
+    {
+        $zeroDecimalCurrencies = [
+            'BIF', 'CLP', 'DJF', 'GNF', 'JPY', 'KMF', 'KRW', 'MGA',
+            'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
+        ];
+
+        return in_array(strtoupper(trim($currency)), $zeroDecimalCurrencies, true);
+    }
+
+    public static function toStripeAmount(float $amount, string $currency): int
+    {
+        if (static::isZeroDecimal($currency)) {
+            return (int) round($amount);
+        }
+
+        return (int) round($amount * 100);
+    }
+
     /**
      * @return array<int, array{code: string, name: string, symbol: string}>
      */

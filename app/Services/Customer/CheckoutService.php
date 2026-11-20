@@ -10,10 +10,12 @@ use App\Models\Coupon;
 use App\Models\CouponUser;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\ProductVariant;
 use App\Models\ShippingAddress;
 use App\Models\User;
 use App\Services\Cart\CartService;
+use App\Services\Payment\StripePaymentService;
 use App\Services\Settings\CurrencyService;
 use App\Support\StripeCurrencies;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,7 @@ class CheckoutService
     public function __construct(
         protected CartService $cartService,
         protected CurrencyService $currencyService,
+        protected StripePaymentService $stripePaymentService,
     ) {}
 
     /**
@@ -168,7 +171,21 @@ class CheckoutService
             // Clear customer cart items after order creation
             $cart->items()->delete();
 
-            return $order->load(['items', 'shippingAddress', 'coupon']);
+            // Create Stripe PaymentIntent and Pending Payment record
+            $paymentIntent = $this->stripePaymentService->createPaymentIntent($order);
+
+            Payment::create([
+                'order_id' => $order->id,
+                'payment_provider' => 'stripe',
+                'stripe_payment_intent_id' => $paymentIntent['id'],
+                'amount' => $order->final_total,
+                'currency' => $order->currency,
+                'payment_status' => 'pending',
+            ]);
+
+            $order->client_secret = $paymentIntent['client_secret'];
+
+            return $order->load(['items', 'shippingAddress', 'coupon', 'payment']);
         });
     }
 

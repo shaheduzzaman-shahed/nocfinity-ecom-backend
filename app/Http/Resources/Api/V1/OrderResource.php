@@ -12,12 +12,15 @@ class OrderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $statusValue = is_object($this->order_status) ? $this->order_status->value : $this->order_status;
+
         return [
             'id' => $this->id,
             'order_number' => $this->order_number,
             'user_id' => $this->user_id,
-            'order_status' => is_object($this->order_status) ? $this->order_status->value : $this->order_status,
+            'order_status' => $statusValue,
             'payment_status' => is_object($this->payment_status) ? $this->payment_status->value : $this->payment_status,
+            'can_cancel' => in_array($statusValue, ['pending', 'paid'], true),
             'currency' => $this->currency,
             'subtotal' => (float) $this->subtotal,
             'product_discount' => (float) $this->product_discount,
@@ -25,6 +28,19 @@ class OrderResource extends JsonResource
             'coupon_discount' => (float) $this->coupon_discount,
             'shipping_charge' => (float) $this->shipping_charge,
             'final_total' => (float) $this->final_total,
+            'client_secret' => $this->client_secret ?? null,
+            'payment' => $this->whenLoaded('payment', function () {
+                if (! $this->payment) {
+                    return null;
+                }
+
+                return [
+                    'id' => $this->payment->id,
+                    'provider' => $this->payment->payment_provider,
+                    'status' => $this->payment->payment_status,
+                    'stripe_payment_intent_id' => $this->payment->stripe_payment_intent_id,
+                ];
+            }),
             'shipping_address' => [
                 'id' => $this->shipping_address_id,
                 'name' => $this->ship_name,
