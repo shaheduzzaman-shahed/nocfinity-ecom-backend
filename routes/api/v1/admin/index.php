@@ -12,4 +12,5 @@ Route::prefix('admin')->group(function () {
     include __DIR__.'/order.php';
     include __DIR__.'/coupon.php';
     include __DIR__.'/setting.php';
+    include __DIR__.'/review.php';
 });
