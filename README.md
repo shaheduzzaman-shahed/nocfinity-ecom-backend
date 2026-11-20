@@ -111,7 +111,7 @@ backend/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd backend
+   cd nocfinity-ecom-backend
    ```
 2. **Install PHP dependencies**
    ```bash
