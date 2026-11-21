@@ -25,3 +25,6 @@ Route::get('storage-link', function () {
     
     return 'Storage linked successfully.';
 });
+
+use Illuminate\Support\Facades\Storage;
+
