@@ -28,3 +28,10 @@ Route::get('storage-link', function () {
 
 use Illuminate\Support\Facades\Storage;
 
+Route::get('/storage/{folder}/{path}', function (string $folder, string $path) {
+    if (!Storage::disk('public')->exists($folder . '/' . $path)) {
+        abort(404);
+    }
+
+    return Storage::disk('public')->get($folder . '/' . $path);
+})->where('path', '.*');
