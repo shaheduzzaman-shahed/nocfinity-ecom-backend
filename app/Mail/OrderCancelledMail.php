@@ -16,7 +16,9 @@ class OrderCancelledMail extends Mailable
     public function __construct(
         public Order $order,
         public string $reason = 'Cancelled upon customer request',
-    ) {}
+    ) {
+        $this->order->loadMissing(['items']);
+    }
 
     public function envelope(): Envelope
     {

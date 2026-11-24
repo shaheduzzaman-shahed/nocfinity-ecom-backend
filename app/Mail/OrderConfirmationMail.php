@@ -15,7 +15,9 @@ class OrderConfirmationMail extends Mailable
 
     public function __construct(
         public Order $order,
-    ) {}
+    ) {
+        $this->order->loadMissing(['items', 'coupon']);
+    }
 
     public function envelope(): Envelope
     {

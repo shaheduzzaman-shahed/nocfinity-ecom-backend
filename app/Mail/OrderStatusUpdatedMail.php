@@ -18,7 +18,9 @@ class OrderStatusUpdatedMail extends Mailable
         public string $previousStatus,
         public string $newStatus,
         public ?string $note = null,
-    ) {}
+    ) {
+        $this->order->loadMissing(['items']);
+    }
 
     public function envelope(): Envelope
     {
